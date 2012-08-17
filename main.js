@@ -27,11 +27,14 @@
 
 define(function (require, exports, module) {
     "use strict";
+    var COMMAND_ID = "openFileFromUrl.fullEditor";
     
     // Brackets modules
     var EditorManager       = brackets.getModule("editor/EditorManager"),
         ProjectManager      = brackets.getModule("project/ProjectManager"),
         FileViewController  = brackets.getModule("project/FileViewController"),
+        CommandManager      = brackets.getModule("command/CommandManager"),
+        KeyBindingManager   = brackets.getModule("command/KeyBindingManager"),
         Dialogs             = brackets.getModule("widgets/Dialogs");
     
     
@@ -85,32 +88,20 @@ define(function (require, exports, module) {
     }
     
     function showMessage(pMessage) {
-        // TODO find a better way to handle dialogs
-        // Having to use an existing dialog ID since no better choice seems available
         Dialogs.showModalDialog(Dialogs.DIALOG_ID_ERROR, "OpenFileFromUrl", pMessage);
     }
     
     
-    /**
-     * This function is registered with EditManager as an inline editor provider. It creates an inline editor
-     * when cursor is on a JavaScript function name, find all functions that match the name
-     * and show (one/all of them) in an inline editor.
-     *
-     * @param {!Editor} editor
-     * @param {!{line:Number, ch:Number}} pos
-     * @return {$.Promise} a promise that will be resolved with an InlineWidget
-     *      or null if we're not going to provide anything.
-     */
-    function inlineOpenFile(hostEditor, pos) {
+    function fullEditFile() {
         
-        // Only provide image viewer if the selection is within a single line
+        var hostEditor = EditorManager.getCurrentFullEditor();
+        
+        
         var sel = hostEditor.getSelection(false);
         if (sel.start.line !== sel.end.line) {
             return null;
         }
-        
-        // Always use the selection start for determining the image file name. The pos
-        // parameter is usually the selection end.        
+           
         var fileName = _getStringAtPos(hostEditor, hostEditor.getSelection(false).start);
         if (fileName === "") {
             return null;
@@ -146,6 +137,8 @@ define(function (require, exports, module) {
         
         return promise;
     }
-
-    EditorManager.registerInlineEditProvider(inlineOpenFile);
+    
+    
+    CommandManager.register("Edit File", COMMAND_ID, fullEditFile);
+    KeyBindingManager.addBinding(COMMAND_ID, "Alt-O");
 });
